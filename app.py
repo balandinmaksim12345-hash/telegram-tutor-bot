@@ -1,6 +1,11 @@
 from flask import Flask
-from tg_bot import main
 import threading
+import time
+import logging
+
+# Настраиваем логирование, чтобы видеть всё, что происходит
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -9,13 +14,20 @@ app = Flask(__name__)
 def health():
     return "OK", 200
 
-# Запускаем бота в отдельном потоке, чтобы Flask мог работать
-def start_bot():
-    main()
+# Отдельная функция для запуска бота
+def run_bot():
+    try:
+        logger.info("Пытаюсь запустить бота...")
+        from tg_bot import main
+        main()
+    except Exception as e:
+        logger.error(f"Ошибка при запуске бота: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
-    # Запускаем бота в фоне
-    bot_thread = threading.Thread(target=start_bot, daemon=True)
+    # Запускаем бота в фоновом потоке с задержкой, чтобы Flask успел запуститься
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
-    # Запускаем Flask
+    logger.info("Flask сервер запускается...")
     app.run(host='0.0.0.0', port=10000)
