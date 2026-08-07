@@ -229,7 +229,6 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await main_menu(update, context, is_callback=False)
 
 
-# ========== ЗАПУСК ==========
 async def main():
     load_questions()
     if not QUESTIONS:
@@ -243,7 +242,5 @@ async def main():
     logger.info("Бот запущен и готов к работе!")
     logger.info(f"Сообщения будут отправляться на ID: {YOUR_WIFE_TELEGRAM_ID}")
     
-    await app.run_polling()
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    # ОТКЛЮЧАЕМ ОБРАБОТКУ СИГНАЛОВ
+    await app.run_polling(signal_handlers=False)
