@@ -3,11 +3,10 @@ import logging
 import os
 import random
 from collections import defaultdict
-import asyncio
 
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters, Updater
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 QUESTIONS = []
 TOPICS_BY_SUBJECT = defaultdict(set)
 
-# ID жены — замените на правильный
+# ID жены
 YOUR_WIFE_TELEGRAM_ID = 1355808970
 
 def load_questions():
@@ -230,12 +229,14 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ========== ЗАПУСК ==========
-async def main():
+def main():
     load_questions()
     if not QUESTIONS:
         logger.warning("Нет вопросов. Бот будет работать без тестов.")
 
-    app = Application.builder().token(BOT_TOKEN).build()
+    updater = Updater(BOT_TOKEN)
+    app = updater.application
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
@@ -243,4 +244,5 @@ async def main():
     logger.info("Бот запущен и готов к работе!")
     logger.info(f"Сообщения будут отправляться на ID: {YOUR_WIFE_TELEGRAM_ID}")
     
-    await app.run_polling()
+    updater.start_polling()
+    updater.idle()
