@@ -3,7 +3,7 @@ import threading
 import time
 import logging
 
-# Настраиваем логирование, чтобы видеть всё, что происходит
+# Настраиваем логирование
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,7 @@ def health():
 def run_bot():
     try:
         logger.info("Пытаюсь запустить бота...")
+        # ИМПОРТ ВНУТРИ ФУНКЦИИ — это важно!
         from tg_bot import main
         main()
     except Exception as e:
@@ -26,7 +27,8 @@ def run_bot():
         traceback.print_exc()
 
 if __name__ == "__main__":
-    # Запускаем бота в фоновом потоке с задержкой, чтобы Flask успел запуститься
+    # Даём небольшую задержку перед запуском бота
+    time.sleep(2)
     bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
     logger.info("Flask сервер запускается...")
