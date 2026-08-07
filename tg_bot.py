@@ -5,7 +5,7 @@ import random
 from collections import defaultdict
 
 from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters, Updater
 
 load_dotenv()
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 QUESTIONS = []
 TOPICS_BY_SUBJECT = defaultdict(set)
 
-# ID жены
+# ID жены — замените на правильный
 YOUR_WIFE_TELEGRAM_ID = 1355808970
 
 def load_questions():
@@ -234,7 +234,9 @@ def main():
     if not QUESTIONS:
         logger.warning("Нет вопросов. Бот будет работать без тестов.")
 
-    updater = Updater(token=BOT_TOKEN)
+    # Правильный способ создания Updater
+    bot = Bot(token=BOT_TOKEN)
+    updater = Updater(bot=bot)
     app = updater.application
 
     app.add_handler(CommandHandler("start", start))
