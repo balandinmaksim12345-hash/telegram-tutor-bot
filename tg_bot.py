@@ -227,16 +227,13 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await main_menu(update, context, is_callback=False)
 
-
 # ========== ЗАПУСК ==========
 def main():
     load_questions()
     if not QUESTIONS:
         logger.warning("Нет вопросов. Бот будет работать без тестов.")
 
-    updater = Updater(BOT_TOKEN)
-    app = updater.application
-
+    app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
@@ -244,5 +241,4 @@ def main():
     logger.info("Бот запущен и готов к работе!")
     logger.info(f"Сообщения будут отправляться на ID: {YOUR_WIFE_TELEGRAM_ID}")
     
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
