@@ -1,4 +1,5 @@
 from flask import Flask
+import threading
 import logging
 import os
 
@@ -12,7 +13,19 @@ app = Flask(__name__)
 def health():
     return "OK", 200
 
-# ЗАПУСКАЕМ БОТА ПРЯМО ЗДЕСЬ (в главном потоке)
-logger.info("Запуск бота...")
-from tg_bot import main
-main()
+def run_bot():
+    try:
+        logger.info("Запуск бота...")
+        from tg_bot import main
+        main()
+    except Exception as e:
+        logger.error(f"Ошибка бота: {e}")
+
+# Запускаем бота в фоновом потоке
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
+
+# Flask-сервер запускается в основном потоке
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
