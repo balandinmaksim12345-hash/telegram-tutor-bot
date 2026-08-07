@@ -5,21 +5,19 @@ import random
 from collections import defaultdict
 
 from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters, Updater
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
-    raise ValueError("Токен не найден! Проверьте файл .env")
+    raise ValueError("Токен не найден!")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 QUESTIONS = []
 TOPICS_BY_SUBJECT = defaultdict(set)
-
-# ID жены — замените на правильный
 YOUR_WIFE_TELEGRAM_ID = 1355808970
 
 def load_questions():
@@ -41,7 +39,6 @@ def load_questions():
     logger.info(f"Темы: {dict(TOPICS_BY_SUBJECT)}")
 
 
-# ========== ГЛАВНОЕ МЕНЮ ==========
 async def main_menu(update_or_query, context, is_callback=False):
     keyboard = [
         [InlineKeyboardButton("📝 Записаться на урок", callback_data="signup")],
@@ -60,7 +57,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await main_menu(update, context, is_callback=False)
 
 
-# ========== МЕНЮ ТЕМ ==========
 async def show_topics(query, subject, title):
     topics = list(TOPICS_BY_SUBJECT.get(subject, []))
     if not topics:
@@ -76,7 +72,6 @@ async def show_topics(query, subject, title):
     await query.edit_message_text(f"{title}\n\nВыберите тему для теста:", reply_markup=InlineKeyboardMarkup(keyboard))
 
 
-# ========== ТЕСТЫ ==========
 async def start_test(query, context, subject, topic):
     filtered = [q for q in QUESTIONS if q.get("subject") == subject and q.get("topic") == topic]
     if not filtered:
@@ -86,7 +81,6 @@ async def start_test(query, context, subject, topic):
     context.user_data["test_questions"] = filtered.copy()
     context.user_data["test_subject"] = subject
     context.user_data["test_topic"] = topic
-
     await send_random_question(query, context)
 
 
@@ -112,7 +106,6 @@ async def send_random_question(update_or_query, context, is_new=False):
         await update_or_query.edit_message_text(text, reply_markup=reply_markup)
 
 
-# ========== ОБРАБОТЧИК КНОПОК ==========
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -181,7 +174,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Неизвестная команда. /start")
 
 
-# ========== ОБРАБОТЧИК ТЕКСТА (АНКЕТА) ==========
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = context.user_data.get("state")
     text = update.message.text
@@ -228,17 +220,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await main_menu(update, context, is_callback=False)
 
 
-# ========== ЗАПУСК ==========
 def main():
     load_questions()
     if not QUESTIONS:
         logger.warning("Нет вопросов. Бот будет работать без тестов.")
 
-    # Правильный способ создания Updater
-    bot = Bot(token=BOT_TOKEN)
-    updater = Updater(bot=bot)
-    app = updater.application
-
+    app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
@@ -246,5 +233,8 @@ def main():
     logger.info("Бот запущен и готов к работе!")
     logger.info(f"Сообщения будут отправляться на ID: {YOUR_WIFE_TELEGRAM_ID}")
     
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
+
+
+if __name__ == "__main__":
+    main()
