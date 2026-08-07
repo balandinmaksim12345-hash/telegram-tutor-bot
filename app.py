@@ -17,12 +17,8 @@ def run_flask():
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
 
-if __name__ == "__main__":
-    # Запускаем Flask в фоновом потоке
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-    
-    # Запускаем бота в главном потоке
-    logger.info("Запуск бота...")
-    from tg_bot import main
-    main()
+# ===== ЗАПУСКАЕМ БОТА СРАЗУ ПРИ ИМПОРТЕ =====
+logger.info("Запуск бота...")
+from tg_bot import main
+main()
+# ===========================================
