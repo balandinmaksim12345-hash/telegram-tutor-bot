@@ -3,7 +3,12 @@ import logging
 import os
 import random
 from collections import defaultdict
-
+# Обход ошибки совместимости с Python 3.14
+import sys
+if sys.version_info >= (3, 14):
+    import typing
+    if not hasattr(typing.Union, '__module__'):
+        setattr(typing.Union, '__module__', 'typing')
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
