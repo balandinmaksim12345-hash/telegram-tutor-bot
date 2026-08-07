@@ -289,7 +289,16 @@ def main():
 
     logger.info("Бот запущен и готов к работе!")
     logger.info(f"Сообщения будут отправляться на ID: {YOUR_WIFE_TELEGRAM_ID}")
-    app.run_polling()
+    
+    # Запускаем polling с обработкой ошибок
+    try:
+        app.run_polling()
+    except RuntimeError as e:
+        if "asyncio.run() cannot be called from a running event loop" in str(e):
+            import asyncio
+            asyncio.create_task(app.run_polling())
+        else:
+            raise
 
 if __name__ == "__main__":
     main()
