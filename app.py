@@ -2,6 +2,7 @@ from flask import Flask
 import threading
 import time
 import logging
+import os
 
 # Настраиваем логирование
 logging.basicConfig(level=logging.INFO)
@@ -14,11 +15,10 @@ app = Flask(__name__)
 def health():
     return "OK", 200
 
-# Отдельная функция для запуска бота
+# ===== ЗАПУСК БОТА ПРИ СТАРТЕ =====
 def run_bot():
     try:
         logger.info("Пытаюсь запустить бота...")
-        # ИМПОРТ ВНУТРИ ФУНКЦИИ — это важно!
         from tg_bot import main
         main()
     except Exception as e:
@@ -26,10 +26,14 @@ def run_bot():
         import traceback
         traceback.print_exc()
 
+# ЗАПУСКАЕМ БОТА СРАЗУ ПРИ ЗАГРУЗКЕ МОДУЛЯ
+# Это нужно для Gunicorn
+logger.info("Инициализация бота...")
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
+logger.info("Бот запущен в фоновом потоке")
+# ===== КОНЕЦ =====
+
+# Flask-приложение для Gunicorn
 if __name__ == "__main__":
-    # Даём небольшую задержку перед запуском бота
-    time.sleep(2)
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
-    logger.info("Flask сервер запускается...")
     app.run(host='0.0.0.0', port=10000)
