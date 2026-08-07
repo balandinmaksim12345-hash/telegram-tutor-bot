@@ -4,6 +4,17 @@ import os
 import random
 from collections import defaultdict
 # Обход ошибки совместимости с Python 3.14
+# ===== ОБХОД ОШИБКИ ДЛЯ RENDER =====
+import sys
+if sys.version_info >= (3, 14):
+    import typing
+    try:
+        # Исправляем проблему с typing.Union
+        if not hasattr(typing.Union, '__module__'):
+            setattr(typing.Union, '__module__', 'typing')
+    except AttributeError:
+        pass
+# ===== КОНЕЦ ОБХОДА =====
 import sys
 if sys.version_info >= (3, 14):
     import typing
