@@ -3,7 +3,7 @@ import threading
 import asyncio
 import logging
 
-# Настраиваем логирование СРАЗУ
+# Настраиваем логирование
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ app = Flask(__name__)
 def health():
     return "OK", 200
 
-# ===== ОДНА ПРАВИЛЬНАЯ ФУНКЦИЯ run_bot =====
+# ===== ЗАПУСК БОТА ПРИ СТАРТЕ GUNICORN =====
 def run_bot():
     try:
         logger.info("Функция run_bot вызвана! Начинаю импорт...")
@@ -27,9 +27,14 @@ def run_bot():
         import traceback
         traceback.print_exc()
 
-# ===== ЗАПУСК =====
+# ЗАПУСКАЕМ БОТА СРАЗУ ПРИ ЗАГРУЗКЕ МОДУЛЯ
+# Это нужно для Gunicorn
+logger.info("Инициализация бота...")
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
+logger.info("Бот запущен в фоновом потоке")
+# ===== КОНЕЦ =====
+
+# Flask-приложение для Gunicorn
 if __name__ == "__main__":
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
-    logger.info("Flask сервер запускается...")
     app.run(host='0.0.0.0', port=10000)
