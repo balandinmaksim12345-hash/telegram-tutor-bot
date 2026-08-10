@@ -146,12 +146,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("Ошибка. Начните тест заново.")
             return
 
-        correct = current_q.get("correct_option_index", 0)
         if selected == correct:
-            result = "✅ Верно! 👍"
-        else:
-            correct_text = current_q["options"][correct]
-            result = f"❌ Неверно. Правильный ответ: {correct_text}"
+    result = current_q.get("feedback_correct", "✅ Верно! 👍")
+else:
+    result = current_q.get("feedback_incorrect", f"❌ Неверно. Правильный ответ: {current_q['options'][correct]}")
 
         keyboard = [
             [InlineKeyboardButton("➡️ Следующий вопрос", callback_data="next_question")],
@@ -181,11 +179,11 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if state == "signup_name":
         context.user_data["student_name"] = text
         context.user_data["state"] = "signup_age"
-        await update.message.reply_text(f"Приятно познакомиться, {text}! Сколько вам лет / класс?")
+        await update.message.reply_text(f"Приятно познакомиться, {text}! В каком классе ученик?")
 
     elif state == "signup_age":
         if not text.isdigit():
-            await update.message.reply_text("Введите число (например, 17).")
+            await update.message.reply_text("Введите число.")
             return
         context.user_data["student_age"] = text
         context.user_data["state"] = "signup_score"
