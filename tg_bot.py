@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 QUESTIONS = []
 TOPICS_BY_SUBJECT = defaultdict(set)
-YOUR_WIFE_TELEGRAM_ID = 1355808970
+YOUR_WIFE_TELEGRAM_ID = 486388707
 
 def load_questions():
     global QUESTIONS, TOPICS_BY_SUBJECT
