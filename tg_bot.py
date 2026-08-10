@@ -112,8 +112,23 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
 
     if data == "signup":
+        context.user_data["state"] = "signup_who"
+        keyboard = [
+            [InlineKeyboardButton("👤 Я", callback_data="who_me")],
+            [InlineKeyboardButton("👶 Ребенок/родственник", callback_data="who_child")]
+        ]
+        await query.edit_message_text(
+            "📝 Кто будет заниматься?\n\nВыберите вариант:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    elif data.startswith("who_"):
+        who = "Я" if data == "who_me" else "Ребенок/родственник"
+        context.user_data["signup_who"] = who
         context.user_data["state"] = "signup_name"
-        await query.edit_message_text("📝 Как вас зовут?")
+        await query.edit_message_text(
+            f"✅ Вы выбрали: {who}\n\nТеперь напишите имя ученика/ученицы:"
+        )
 
     elif data == "prices":
         text = (
@@ -178,33 +193,45 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = context.user_data.get("state")
     text = update.message.text
 
-    if state == "signup_name":
-        context.user_data["student_name"] = text
-        context.user_data["state"] = "signup_age"
-        await update.message.reply_text(f"Приятно познакомиться, {text}! В каком классе ученик?")
+    if state == "signup_who":
+        await update.message.reply_text("Пожалуйста, выберите вариант с помощью кнопок.")
+        return
 
-    elif state == "signup_age":
-        if not text.isdigit():
-            await update.message.reply_text("Введите число.")
-            return
-        context.user_data["student_age"] = text
+    elif state == "signup_name":
+        context.user_data["student_name"] = text
+        context.user_data["state"] = "signup_class"
+        await update.message.reply_text("В каком классе учится ученик/ученица?")
+
+    elif state == "signup_class":
+        context.user_data["student_class"] = text
         context.user_data["state"] = "signup_score"
-        await update.message.reply_text("Укажите желаемый балл (ЕГЭ/ОГЭ)?")
+        await update.message.reply_text("Какой желаемый балл ЕГЭ?")
 
     elif state == "signup_score":
         context.user_data["student_score"] = text
+
+        who = context.user_data.get("signup_who", "Не указано")
         name = context.user_data.get("student_name", "Не указано")
-        age = context.user_data.get("student_age", "Не указано")
+        cls = context.user_data.get("student_class", "Не указано")
         score = context.user_data.get("student_score", "Не указано")
+
+        user_link = f"tg://user?id={update.effective_user.id}"
+        username = update.effective_user.username
+        if username:
+            user_mention = f"@{username}"
+        else:
+            user_mention = user_link
 
         try:
             await context.bot.send_message(
                 chat_id=YOUR_WIFE_TELEGRAM_ID,
                 text=(
                     f"📝 **НОВАЯ ЗАЯВКА!**\n\n"
-                    f"👤 Имя: {name}\n"
-                    f"📚 Класс: {age}\n"
-                    f"🎯 Желаемый балл: {score}"
+                    f"👤 Кто занимается: {who}\n"
+                    f"📚 Имя ученика: {name}\n"
+                    f"📖 Класс: {cls}\n"
+                    f"🎯 Желаемый балл: {score}\n\n"
+                    f"👨‍💻 Отправитель: {user_mention}"
                 ),
                 parse_mode="Markdown"
             )
@@ -213,7 +240,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.error(f"Ошибка при отправке заявки: {e}")
             await update.message.reply_text("⚠️ Ошибка при отправке. Попробуйте позже.")
 
-        for key in ["state", "student_name", "student_age", "student_score"]:
+        for key in ["state", "signup_who", "student_name", "student_class", "student_score"]:
             context.user_data.pop(key, None)
 
     else:
