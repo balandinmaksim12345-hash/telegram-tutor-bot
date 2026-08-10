@@ -47,7 +47,7 @@ async def main_menu(update_or_query, context, is_callback=False):
         [InlineKeyboardButton("📖 Литература", callback_data="subject_literature")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    text = "👋 Здравствуйте! Я бот-помощник репетитора.\nВыберите действие:"
+    text = "👋 Здравствуйте! Я бот-помощник Баландиной Полины Антоновны.\nВыберите действие:"
     if is_callback:
         await update_or_query.edit_message_text(text, reply_markup=reply_markup)
     else:
@@ -181,15 +181,15 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if state == "signup_name":
         context.user_data["student_name"] = text
         context.user_data["state"] = "signup_age"
-        await update.message.reply_text(f"Приятно познакомиться, {text}! Сколько вам лет / класс?")
+        await update.message.reply_text(f"Приятно познакомиться, {text}! В каком классе ученик?")
 
     elif state == "signup_age":
         if not text.isdigit():
-            await update.message.reply_text("Введите число (например, 17).")
+            await update.message.reply_text("Введите число.")
             return
         context.user_data["student_age"] = text
         context.user_data["state"] = "signup_score"
-        await update.message.reply_text("Какой желаемый балл (ЕГЭ/ОГЭ)?")
+        await update.message.reply_text("Укажите желаемый балл (ЕГЭ/ОГЭ)?")
 
     elif state == "signup_score":
         context.user_data["student_score"] = text
