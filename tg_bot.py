@@ -78,19 +78,31 @@ async def start_test(query, context, subject, topic):
         await query.edit_message_text("❌ Вопросов по этой теме нет.")
         return
 
-    context.user_data["test_questions"] = filtered.copy()
+    # Перемешиваем вопросы при старте
+    random.shuffle(filtered)
+    
+    context.user_data["test_questions"] = filtered
     context.user_data["test_subject"] = subject
     context.user_data["test_topic"] = topic
-    await send_random_question(query, context)
+    context.user_data["current_index"] = 0
+    
+    await send_question_by_index(query, context)
 
 
-async def send_random_question(update_or_query, context, is_new=False):
+async def send_question_by_index(update_or_query, context, is_new=False):
     questions = context.user_data.get("test_questions", [])
+    index = context.user_data.get("current_index", 0)
+    
     if not questions:
         await update_or_query.edit_message_text("❌ Нет вопросов.")
         return
 
-    q = random.choice(questions)
+    # Если дошли до конца — возвращаемся к первому
+    if index >= len(questions):
+        index = 0
+        context.user_data["current_index"] = 0
+
+    q = questions[index]
     context.user_data["current_question"] = q
 
     text = f"❓ {q['question']}"
@@ -168,6 +180,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             result = current_q.get("feedback_incorrect", f"❌ Неверно. Правильный ответ: {current_q['options'][correct]}")
 
+        # Увеличиваем индекс для следующего вопроса
+        context.user_data["current_index"] = context.user_data.get("current_index", 0) + 1
+
         keyboard = [
             [InlineKeyboardButton("➡️ Следующий вопрос", callback_data="next_question")],
             [InlineKeyboardButton("🏠 В меню", callback_data="back_to_main")]
@@ -178,10 +193,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif data == "next_question":
-        await send_random_question(query, context)
+        await send_question_by_index(query, context)
 
     elif data == "back_to_main":
-        for key in ["test_questions", "current_question", "test_subject", "test_topic"]:
+        for key in ["test_questions", "current_question", "test_subject", "test_topic", "current_index"]:
             context.user_data.pop(key, None)
         await main_menu(query, context, is_callback=True)
 
