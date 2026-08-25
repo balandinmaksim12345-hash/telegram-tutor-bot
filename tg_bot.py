@@ -20,13 +20,13 @@ QUESTIONS = []
 TOPICS_BY_SUBJECT = defaultdict(set)
 YOUR_WIFE_TELEGRAM_ID = 486388707
 
-# Тексты для расписания по дням
+# Тексты для расписания по дням (без фразы про личные сообщения)
 SCHEDULE_TEXTS = {
-    "mon": "📅 **Понедельник**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim",
-    "tue": "📅 **Вторник**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim",
-    "wed": "📅 **Среда**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim",
-    "thu": "📅 **Четверг**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim",
-    "fri": "📅 **Пятница**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim"
+    "mon": "📅 **Понедельник**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50",
+    "tue": "📅 **Вторник**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50",
+    "wed": "📅 **Среда**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50",
+    "thu": "📅 **Четверг**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50",
+    "fri": "📅 **Пятница**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50"
 }
 
 DAY_NAMES = {
@@ -95,7 +95,6 @@ async def start_test(query, context, subject, topic):
         await query.edit_message_text("❌ Вопросов по этой теме нет.")
         return
 
-    # Перемешиваем вопросы при старте
     random.shuffle(filtered)
     
     context.user_data["test_questions"] = filtered
@@ -114,7 +113,6 @@ async def send_question_by_index(update_or_query, context, is_new=False):
         await update_or_query.edit_message_text("❌ Нет вопросов.")
         return
 
-    # Если дошли до конца — возвращаемся к первому
     if index >= len(questions):
         index = 0
         context.user_data["current_index"] = 0
@@ -208,7 +206,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             result = current_q.get("feedback_incorrect", f"❌ Неверно. Правильный ответ: {current_q['options'][correct]}")
 
-        # Увеличиваем индекс для следующего вопроса
         context.user_data["current_index"] = context.user_data.get("current_index", 0) + 1
 
         keyboard = [
@@ -273,12 +270,18 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"👤 Кто занимается: {who}\n"
                     f"📚 Имя ученика: {name}\n"
                     f"📖 Класс: {cls}\n"
-                    f"🎯 Желаемый балл ЕГЭ/ОГЭ: {score}\n\n"
+                    f"🎯 Желаемый балл: {score}\n\n"
                     f"👨‍💻 Отправитель: {user_mention}"
                 ),
                 parse_mode="Markdown"
             )
-            await update.message.reply_text("✅ Заявка отправлена! Преподаватель свяжется с вами.")
+            
+            # Отправляем сообщение пользователю с кнопкой "Назад в меню"
+            keyboard = [[InlineKeyboardButton("🏠 В меню", callback_data="back_to_main")]]
+            await update.message.reply_text(
+                "✅ Заявка отправлена! Преподаватель свяжется с вами.",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
         except Exception as e:
             logger.error(f"Ошибка при отправке заявки: {e}")
             await update.message.reply_text("⚠️ Ошибка при отправке. Попробуйте позже.")
