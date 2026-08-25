@@ -20,6 +20,23 @@ QUESTIONS = []
 TOPICS_BY_SUBJECT = defaultdict(set)
 YOUR_WIFE_TELEGRAM_ID = 486388707
 
+# Тексты для расписания по дням
+SCHEDULE_TEXTS = {
+    "mon": "📅 **Понедельник**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim",
+    "tue": "📅 **Вторник**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim",
+    "wed": "📅 **Среда**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim",
+    "thu": "📅 **Четверг**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim",
+    "fri": "📅 **Пятница**\n\n🕐 Свободные окошки (время по МСК):\n\n12:30-13:30\n14:00-15:00\n15:15-16:15\n16:20-17:20\n17:30-18:30\n18:40-19:40\n19:50-20:50\n\n✏️ Выберите удобное время и напишите в личные сообщения @BalandinMaksim"
+}
+
+DAY_NAMES = {
+    "mon": "Понедельник",
+    "tue": "Вторник",
+    "wed": "Среда",
+    "thu": "Четверг",
+    "fri": "Пятница"
+}
+
 def load_questions():
     global QUESTIONS, TOPICS_BY_SUBJECT
     try:
@@ -42,7 +59,7 @@ def load_questions():
 async def main_menu(update_or_query, context, is_callback=False):
     keyboard = [
         [InlineKeyboardButton("📝 Записаться на урок", callback_data="signup")],
-        [InlineKeyboardButton("💰 Цены и условия", callback_data="prices")],
+        [InlineKeyboardButton("🗓 Свободные окошки", callback_data="schedule")],
         [InlineKeyboardButton("📚 Русский язык", callback_data="subject_russian")],
         [InlineKeyboardButton("📖 Литература", callback_data="subject_literature")],
     ]
@@ -142,15 +159,26 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"✅ Вы выбрали: {who}\n\nТеперь напишите имя ученика/ученицы:"
         )
 
-    elif data == "prices":
-        text = (
-            "💰 **Цены:**\n"
-            "• Индивидуальное (60 мин) — 1500 руб.\n"
-            "• Парное (60 мин) — 1000 руб.\n"
-            "• Экспресс к ЕГЭ (90 мин) — 2000 руб.\n\n"
-            "Первое занятие **бесплатно**!"
+    elif data == "schedule":
+        keyboard = [
+            [InlineKeyboardButton("Понедельник", callback_data="day_mon")],
+            [InlineKeyboardButton("Вторник", callback_data="day_tue")],
+            [InlineKeyboardButton("Среда", callback_data="day_wed")],
+            [InlineKeyboardButton("Четверг", callback_data="day_thu")],
+            [InlineKeyboardButton("Пятница", callback_data="day_fri")],
+            [InlineKeyboardButton("🔙 Назад", callback_data="back_to_main")]
+        ]
+        await query.edit_message_text(
+            "🗓 Выберите день недели:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
-        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_main")]]
+
+    elif data.startswith("day_"):
+        day_key = data.split("_")[1]
+        day_name = DAY_NAMES.get(day_key, "День")
+        text = SCHEDULE_TEXTS.get(day_key, "Расписание временно недоступно.")
+        
+        keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="schedule")]]
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif data == "subject_russian":
@@ -220,7 +248,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif state == "signup_class":
         context.user_data["student_class"] = text
         context.user_data["state"] = "signup_score"
-        await update.message.reply_text("Какой желаемый балл ЕГЭ?")
+        await update.message.reply_text("Какой желаемый балл ЕГЭ/ОГЭ?")
 
     elif state == "signup_score":
         context.user_data["student_score"] = text
@@ -245,7 +273,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"👤 Кто занимается: {who}\n"
                     f"📚 Имя ученика: {name}\n"
                     f"📖 Класс: {cls}\n"
-                    f"🎯 Желаемый балл: {score}\n\n"
+                    f"🎯 Желаемый балл ЕГЭ/ОГЭ: {score}\n\n"
                     f"👨‍💻 Отправитель: {user_mention}"
                 ),
                 parse_mode="Markdown"
